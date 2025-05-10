@@ -1,3 +1,97 @@
-.venv/
+# Python
 __pycache__/
-cache/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# Project specific
+/data/raw/
+/data/processed/
+/models/checkpoints/
+/logs/
+.streamlit/secrets.toml
+
+# FastF1 cache
+/data/raw/fastf1_cache/
+
+# Heroku
+.env.local
+Procfile.local
+.heroku/
+
+# Poetry
+poetry.lock
+
+# dotenv
+.env
+
+# Large files
+*.parquet
+*.pkl
+*.joblib
+
+# Allow sample/test data
+!data/raw/samples/
+!data/processed/samples/
+!models/checkpoints/samples/

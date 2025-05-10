@@ -1,0 +1,225 @@
+openapi: "3.0.0"
+info:
+  title: "F1 Race Insight API"
+  description: "API for predicting safety car deployments in Formula 1 races"
+  version: "1.0.0"
+  contact:
+    name: "F1 Race Insight Team"
+    url: "https://github.com/yourusername/f1-race-insight"
+  license:
+    name: "MIT"
+servers:
+  - url: "https://f1-race-insight.herokuapp.com"
+    description: "Production server"
+  - url: "http://localhost:5000"
+    description: "Development server"
+paths:
+  /api/v1/health:
+    get:
+      summary: "Health check endpoint"
+      description: "Returns the current status of the API and information about the model"
+      operationId: "healthCheck"
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  status:
+                    type: "string"
+                    example: "ok"
+                  timestamp:
+                    type: "string"
+                    format: "date-time"
+                    example: "2023-06-10T12:34:56Z"
+                  git_revision:
+                    type: "string"
+                    example: "a1b2c3d"
+                  model_timestamp:
+                    type: "string"
+                    format: "date-time"
+                    example: "2023-06-08T09:12:34Z"
+                required:
+                  - status
+                  - timestamp
+  /api/v1/predict:
+    post:
+      summary: "Predict safety car deployment"
+      description: "Predicts the probability of safety car deployment for a specific lap in a Formula 1 race"
+      operationId: "predictSafetyCar"
+      requestBody:
+        description: "Prediction request parameters"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                race_id:
+                  type: "string"
+                  description: "Race identifier in format: YYYY_RR_EventName"
+                  example: "2023_05_Monaco"
+                lap:
+                  type: "integer"
+                  description: "Lap number"
+                  example: 23
+                lap_data:
+                  type: "object"
+                  description: "Optional additional data for the lap"
+                  properties:
+                    Driver:
+                      type: "string"
+                      example: "VER"
+                    Team:
+                      type: "string"
+                      example: "Red Bull Racing"
+                    Compound:
+                      type: "string"
+                      example: "HARD"
+                    TyreLife:
+                      type: "integer"
+                      example: 15
+                    FreshTyre:
+                      type: "boolean"
+                      example: false
+                    SpeedST:
+                      type: "number"
+                      format: "float"
+                      example: 280.5
+                    TrackTemp:
+                      type: "number"
+                      format: "float"
+                      example: 35.2
+              required:
+                - race_id
+                - lap
+      responses:
+        "200":
+          description: "Successful prediction"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  race_id:
+                    type: "string"
+                    example: "2023_05_Monaco"
+                  lap:
+                    type: "integer"
+                    example: 23
+                  probability:
+                    type: "number"
+                    format: "float"
+                    example: 0.37
+                  threshold:
+                    type: "number"
+                    format: "float"
+                    example: 0.29
+                  will_deploy_sc:
+                    type: "boolean"
+                    example: true
+                required:
+                  - race_id
+                  - lap
+                  - probability
+                  - threshold
+                  - will_deploy_sc
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "string"
+                    example: "Invalid request"
+                  message:
+                    type: "string"
+                    example: "Missing required parameters: race_id, lap"
+                required:
+                  - error
+                  - message
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  error:
+                    type: "string"
+                    example: "Internal server error"
+                  message:
+                    type: "string"
+                    example: "Error loading model"
+                required:
+                  - error
+                  - message
+components:
+  schemas:
+    HealthResponse:
+      type: "object"
+      properties:
+        status:
+          type: "string"
+          example: "ok"
+        timestamp:
+          type: "string"
+          format: "date-time"
+        git_revision:
+          type: "string"
+        model_timestamp:
+          type: "string"
+          format: "date-time"
+      required:
+        - status
+        - timestamp
+    PredictionRequest:
+      type: "object"
+      properties:
+        race_id:
+          type: "string"
+          description: "Race identifier in format: YYYY_RR_EventName"
+        lap:
+          type: "integer"
+          description: "Lap number"
+        lap_data:
+          type: "object"
+          description: "Optional additional data for the lap"
+      required:
+        - race_id
+        - lap
+    PredictionResponse:
+      type: "object"
+      properties:
+        race_id:
+          type: "string"
+        lap:
+          type: "integer"
+        probability:
+          type: "number"
+          format: "float"
+        threshold:
+          type: "number"
+          format: "float"
+        will_deploy_sc:
+          type: "boolean"
+      required:
+        - race_id
+        - lap
+        - probability
+        - threshold
+        - will_deploy_sc
+    ErrorResponse:
+      type: "object"
+      properties:
+        error:
+          type: "string"
+        message:
+          type: "string"
+      required:
+        - error
+        - message 

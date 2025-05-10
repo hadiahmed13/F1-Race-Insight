@@ -1,0 +1,87 @@
+name: ETL and Retrain
+
+on:
+  schedule:
+    - cron: '0 3 * * 6'  # Every Saturday at 03:00 UTC
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  etl-train-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+    
+    - name: Install dependencies
+      run: |
+        poetry install
+    
+    - name: Run ETL pipeline
+      run: |
+        make etl
+      env:
+        FASTF1_CACHE_TOKEN: ${{ secrets.FASTF1_CACHE_TOKEN }}
+    
+    - name: Train model
+      run: |
+        make train
+    
+    - name: Calculate model metrics
+      id: metrics
+      run: |
+        AUC=$(poetry run python -c "from src.models.evaluate import get_latest_auc; print(get_latest_auc())")
+        echo "AUC=$AUC" >> $GITHUB_OUTPUT
+    
+    - name: Tag and create release
+      uses: actions/create-release@v1
+      id: create_release
+      if: ${{ steps.metrics.outputs.AUC >= 0.80 }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: model-${{ github.run_number }}
+        release_name: Model Release ${{ github.run_number }} (AUC ${{ steps.metrics.outputs.AUC }})
+        draft: false
+        prerelease: false
+    
+    - name: Upload model to release
+      uses: actions/upload-release-asset@v1
+      if: ${{ steps.metrics.outputs.AUC >= 0.80 }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./models/checkpoints/model_latest.joblib
+        asset_name: model_latest.joblib
+        asset_content_type: application/octet-stream
+    
+    - name: Upload dataset to release
+      uses: actions/upload-release-asset@v1
+      if: ${{ steps.metrics.outputs.AUC >= 0.80 }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./data/processed/f1_safety_car_dataset.parquet
+        asset_name: f1_safety_car_dataset.parquet
+        asset_content_type: application/octet-stream
+    
+    - name: Build and push to Heroku
+      if: ${{ steps.metrics.outputs.AUC >= 0.80 }}
+      run: |
+        docker login --username=_ --password=${{ secrets.HEROKU_API_KEY }} registry.heroku.com
+        docker build -t registry.heroku.com/${{ secrets.HEROKU_APP }}/web .
+        docker push registry.heroku.com/${{ secrets.HEROKU_APP }}/web
+        heroku container:release web --app ${{ secrets.HEROKU_APP }}
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }} 
