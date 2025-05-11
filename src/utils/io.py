@@ -71,7 +71,7 @@ def download_github_asset(
     """Download an asset from a GitHub release.
 
     Args:
-        repo: The GitHub repository (e.g., "username/repo").
+        repo: The GitHub repository (e.g., "hadiahmed13/f1-race-insight").
         tag: The release tag (e.g., "v1.0.0").
         asset_name: The name of the asset to download.
         output_path: The path to save the downloaded file to.

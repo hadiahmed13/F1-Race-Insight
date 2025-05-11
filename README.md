@@ -1,15 +1,15 @@
 # F1 Race Insight Predictor
 
-[![Build Status](https://github.com/yourusername/f1-race-insight/workflows/CI/badge.svg)](https://github.com/yourusername/f1-race-insight/actions)
-[![codecov](https://codecov.io/gh/yourusername/f1-race-insight/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/f1-race-insight)
+[![Build Status](docs/images/build_status.png)](https://github.com/hadiahmed13/f1-race-insight/actions)
+[![codecov](https://codecov.io/gh/hadiahmed13/f1-race-insight/branch/main/graph/badge.svg)](https://codecov.io/gh/hadiahmed13/f1-race-insight)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![AUC Score](https://img.shields.io/badge/AUC%20Score-0.81-success)](https://github.com/yourusername/f1-race-insight/releases)
+[![AUC Score](https://img.shields.io/badge/AUC%20Score-0.81-success)](https://github.com/hadiahmed13/f1-race-insight/releases)
 
 Machine learning-powered API for predicting safety car deployments in Formula 1 races. Analyze race telemetry, track conditions, and driver behavior to forecast lap-by-lap risk.
 
 ## Architecture
 
-![Architecture Diagram](docs/architecture_diagram.png)
+![Architecture Diagram](docs/images/architecture_diagram.png)
 
 The system consists of four main components:
 1. **ETL Pipeline**: Fetches and processes F1 race telemetry data using FastF1
@@ -33,7 +33,7 @@ The system consists of four main components:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/f1-race-insight.git
+git clone https://github.com/hadiahmed13/f1-race-insight.git
 cd f1-race-insight
 
 # Install dependencies
