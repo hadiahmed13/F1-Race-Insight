@@ -1,8 +1,13 @@
 """Streamlit dashboard for F1 Race Insight."""
 
 import os
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+# Add the project root to the path
+project_root = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 import fastf1
 import joblib
@@ -21,6 +26,12 @@ from src.models.predict import predict_batch
 from src.utils.io import download_github_asset, load_dataframe
 from src.utils.logging import get_logger
 
+# Constants
+DASHBOARD_CACHE_TTL = 3600  # 1 hour cache TTL
+MODEL_PATH = os.path.join("models", "checkpoints", "samples", "model_sample.joblib")
+PIPELINE_PATH = os.path.join("models", "checkpoints", "samples", "pipeline_sample.joblib")
+SAMPLE_DATA_PATH = os.path.join("data", "processed", "samples", "f1_safety_car_dataset_sample.parquet")
+
 # Set FastF1 options
 fastf1.Cache.enable_cache("./data/raw/fastf1_cache")
 
@@ -30,64 +41,38 @@ logger = get_logger(__name__)
 
 @st.cache_resource(ttl=DASHBOARD_CACHE_TTL)
 def load_model_and_pipeline():
-    """Load the model and pipeline from files or GitHub release.
+    """Load the model and pipeline from files.
 
     Returns:
         Tuple of (model, pipeline).
     """
-    # Try to load locally first
+    # Try to load locally
     try:
-        model = joblib.load(LATEST_MODEL_PATH)
+        model = joblib.load(MODEL_PATH)
         pipeline = joblib.load(PIPELINE_PATH)
         return model, pipeline
-    except (FileNotFoundError, OSError):
-        st.warning("Model not found locally, trying to download from GitHub release...")
-        
-        try:
-            # Download from GitHub release
-            model_path = download_github_asset(
-                "yourusername/f1-race-insight", "latest", "model_latest.joblib"
-            )
-            pipeline_path = download_github_asset(
-                "yourusername/f1-race-insight", "latest", "pipeline_latest.joblib"
-            )
-            
-            model = joblib.load(model_path)
-            pipeline = joblib.load(pipeline_path)
-            return model, pipeline
-        
-        except Exception as e:
-            st.error(f"Failed to load model: {str(e)}")
-            return None, None
+    except (FileNotFoundError, OSError) as e:
+        st.error(f"Failed to load model: {str(e)}")
+        return None, None
 
 
 @st.cache_resource(ttl=DASHBOARD_CACHE_TTL)
 def load_dataset():
-    """Load the dataset from file or GitHub release.
+    """Load the dataset from file.
 
     Returns:
         The loaded DataFrame or None if not found.
     """
-    # Try to load locally first
+    # Try to load sample data
     try:
-        return load_dataframe(PROCESSED_DATASET_PATH)
-    except FileNotFoundError:
-        st.warning("Dataset not found locally, trying to download from GitHub release...")
-        
-        try:
-            # Download from GitHub release
-            dataset_path = download_github_asset(
-                "yourusername/f1-race-insight", "latest", "f1_safety_car_dataset.parquet"
-            )
-            return load_dataframe(dataset_path)
-        
-        except Exception as e:
-            st.error(f"Failed to load dataset: {str(e)}")
-            return None
+        return pd.read_parquet(SAMPLE_DATA_PATH)
+    except FileNotFoundError as e:
+        st.error(f"Failed to load dataset: {str(e)}")
+        return None
 
 
 @st.cache_data(ttl=DASHBOARD_CACHE_TTL)
-def get_race_options(df: pd.DataFrame) -> List[Tuple[str, str]]:
+def get_race_options(df: pd.DataFrame) -> list:
     """Get the list of available races.
 
     Args:
@@ -105,15 +90,10 @@ def get_race_options(df: pd.DataFrame) -> List[Tuple[str, str]]:
     # Create display names
     race_options = []
     for race_id in races:
-        parts = race_id.split("_")
-        if len(parts) >= 3:
-            year = parts[0]
-            round_num = parts[1]
-            event_name = parts[2].replace("_", " ")
-            display_name = f"{year} Round {round_num}: {event_name}"
-            race_options.append((race_id, display_name))
+        display_name = f"Race: {race_id}"
+        race_options.append((race_id, display_name))
     
-    # Sort by year and round
+    # Sort by race_id
     race_options.sort(key=lambda x: x[0], reverse=True)
     
     return race_options
@@ -433,9 +413,9 @@ def main():
         df = load_dataset()
         model, pipeline = load_model_and_pipeline()
     
-    if df is None or model is None or pipeline is None:
+    if df is None:
         st.error(
-            "Failed to load the required data and models. Please check the logs for more information."
+            "Failed to load the dataset. Please check that the sample data exists."
         )
         return
     
@@ -443,6 +423,10 @@ def main():
     st.sidebar.header("Race Selection")
     
     race_options = get_race_options(df)
+    if not race_options:
+        st.error("No races found in the dataset.")
+        return
+    
     race_display_dict = {race_id: display for race_id, display in race_options}
     
     selected_race_display = st.sidebar.selectbox(

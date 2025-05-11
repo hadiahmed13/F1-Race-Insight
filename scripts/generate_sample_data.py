@@ -103,6 +103,10 @@ def generate_processed_sample():
     # Add one safety car in lap 3
     df.loc[df["LapNumber"] == 3, "SafetyCar"] = True
     
+    # Add the missing columns
+    df["LapDeltaToFastest"] = np.random.normal(0.5, 0.3, len(df))
+    df["LapDeltaToLeader"] = np.random.normal(1.0, 0.5, len(df))
+    
     # Add target variable - safety car on next lap
     df["sc_next_lap"] = 0
     

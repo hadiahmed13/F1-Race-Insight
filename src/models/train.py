@@ -52,13 +52,29 @@ def load_datasets() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         np.random.seed(42)
         np.random.shuffle(all_races)
         
-        train_races = all_races[:int(0.7 * len(all_races))]
-        test_races = all_races[int(0.7 * len(all_races)):int(0.9 * len(all_races))]
-        holdout_races = all_races[int(0.9 * len(all_races)):]
-        
-        train_df = full_df[full_df["RaceId"].isin(train_races)]
-        test_df = full_df[full_df["RaceId"].isin(test_races)]
-        holdout_df = full_df[full_df["RaceId"].isin(holdout_races)]
+        # For sample data, we may only have one race, so split by rows
+        if len(all_races) <= 1:
+            # Split by rows
+            indices = np.arange(len(full_df))
+            np.random.shuffle(indices)
+            
+            # Use 70% for train, 20% for test, 10% for holdout
+            train_idx = indices[:int(0.7 * len(indices))]
+            test_idx = indices[int(0.7 * len(indices)):int(0.9 * len(indices))]
+            holdout_idx = indices[int(0.9 * len(indices)):]
+            
+            train_df = full_df.iloc[train_idx].copy()
+            test_df = full_df.iloc[test_idx].copy()
+            holdout_df = full_df.iloc[holdout_idx].copy()
+        else:
+            # Normal case - split by races
+            train_races = all_races[:int(0.7 * len(all_races))]
+            test_races = all_races[int(0.7 * len(all_races)):int(0.9 * len(all_races))]
+            holdout_races = all_races[int(0.9 * len(all_races)):]
+            
+            train_df = full_df[full_df["RaceId"].isin(train_races)]
+            test_df = full_df[full_df["RaceId"].isin(test_races)]
+            holdout_df = full_df[full_df["RaceId"].isin(holdout_races)]
     
     logger.info(
         "Datasets loaded",

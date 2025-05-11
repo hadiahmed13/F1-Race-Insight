@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, FunctionTransformer
 
 from src.config import (BOOLEAN_COLUMNS, CATEGORICAL_COLUMNS,
                       FEATURE_COLUMNS, INTERACTION_FEATURES,
@@ -69,7 +69,9 @@ def build_feature_engineering_pipeline() -> Pipeline:
     
     boolean_transformer = Pipeline(
         steps=[
-            ("imputer", SimpleImputer(strategy="constant", fill_value=False)),
+            # Convert boolean to integer first
+            ("to_int", FunctionTransformer(lambda X: X.astype(int))),
+            ("imputer", SimpleImputer(strategy="constant", fill_value=0)),
         ]
     )
     
